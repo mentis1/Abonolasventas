@@ -1,0 +1,173 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #0d1117;
+  color: #f0f0f0;
+  font-family: -apple-system, BlinkMacSystemFont, "San Francisco", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+}
+
+.container {
+  max-width: 480px;
+  margin: auto;
+}
+
+/* Header */
+
+header {
+  text-align: center;
+  background-color: #161b22;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  padding-bottom: 15px;
+}
+
+.header-img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+h1 {
+  font-size: 1.6em;
+  margin: 10px 0 5px;
+  color: #ffffff;
+}
+
+#exportBtn {
+  margin-top: 5px;
+  padding: 6px 12px;
+  font-size: 0.85em;
+  border: none;
+  border-radius: 8px;
+  background-color: #2dba4e;
+  color: white;
+  cursor: pointer;
+}
+
+/* Summary */
+
+.summary {
+  display: flex;
+  justify-content: space-around;
+  background-color: #1f2937;
+  padding: 15px;
+  border-bottom: 1px solid #2e3c4e;
+}
+
+.summary-person {
+  text-align: center;
+}
+
+.summary-name {
+  font-size: 1em;
+  color: #c9d1d9;
+  margin-bottom: 6px;
+}
+
+#diegoCount, #sandraCount,
+#diegoPercentage, #sandraPercentage {
+  font-weight: bold;
+  font-size: 1.1em;
+  color: #f0f6fc;
+}
+
+/* Eventos */
+
+#eventsList {
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.eventCard {
+  background-color: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 12px;
+  padding: 16px;
+  position: relative;
+}
+
+.eventTitle {
+  width: 100%;
+  font-size: 1.1em;
+  margin-bottom: 8px;
+  background-color: transparent;
+  border: none;
+  border-bottom: 1px dashed #444c56;
+  color: #f0f6fc;
+  padding-bottom: 4px;
+}
+
+.eventDate input {
+  width: 100%;
+  padding: 8px;
+  background-color: #21262d;
+  color: #c9d1d9;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.95em;
+  margin-top: 5px;
+}
+
+/* Botones de opciones */
+
+.options {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.optionBtn {
+  flex: 1;
+  padding: 8px;
+  font-size: 0.85em;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: white;
+}
+
+.optionBtn.none { background: #8b0000; }
+.optionBtn.oneDiego { background: #f39c12; }
+.optionBtn.oneSandra { background: #e67e22; }
+.optionBtn.both { background: #2ecc71; }
+
+.optionBtn.selected {
+  outline: 2px solid #58a6ff;
+}
+
+/* Botón eliminar */
+
+.deleteBtn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #ff5555;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  font-size: 0.75em;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* Añadir evento */
+
+#addEventBtn {
+  width: calc(100% - 30px);
+  margin: 20px auto;
+  display: block;
+  padding: 14px;
+  background-color: #238636;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.1em;
+  font-weight: bold;
+  color: white;
+  cursor: pointer;
+}

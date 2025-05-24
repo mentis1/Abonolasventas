@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Abono Las Ventas</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <img src="img/inicio.png" alt="Inicio" class="header-img" />
+      <h1>Abono Las Ventas</h1>
+      <button id="exportBtn">📤 Exportar a Excel</button>
+    </header>
+
+    <div class="summary">
+      <div class="summary-person">
+        <div class="summary-name">Diego</div>
+        <div id="diegoCount">0 / 0</div>
+        <div id="diegoPercentage">0%</div>
+      </div>
+      <div class="summary-person">
+        <div class="summary-name">Sandra</div>
+        <div id="sandraCount">0 / 0</div>
+        <div id="sandraPercentage">0%</div>
+      </div>
+    </div>
+
+    <div id="eventsList"></div>
+
+    <button id="addEventBtn">+ Añadir Evento</button>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
