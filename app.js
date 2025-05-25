@@ -104,31 +104,77 @@ document.getElementById('addEventBtn').addEventListener('click', () => {
   renderEvents();
 });
 
-document.getElementById('exportBtn').addEventListener('click', () => {
+document.getElementById('exportBtn').addEventListener('click', async () => {
+  const { Document, Packer, Paragraph, TextRun, HeadingLevel } = window.docx;
   const total = events.length;
   if (total === 0) return;
 
-  const getStats = (persona) => {
-    const count = events.filter(e => e.asistencia === persona || e.asistencia === 'ambos').length;
-    const porcentaje = total ? Math.round((count / total) * 100) : 0;
-    return [`${count} / ${total}`, `${porcentaje}%`];
+  const now = new Date();
+  const fechaGeneracion = now.toLocaleDateString('es-ES', {
+    weekday: 'long', day: '2-digit', month: 'long', year: 'numeric'
+  });
+
+  const crearTexto = (text, opts = {}) => new Paragraph({
+    children: [new TextRun({ text, font: "Arial", ...opts })],
+  });
+
+  const getPersonaDoc = (persona, nombreMostrar) => {
+    const asistencias = events
+      .filter(e => e.asistencia === persona || e.asistencia === 'ambos')
+      .sort((a, b) => new Date(a.fecha) - new Date(b.fecha))
+      .map(e => {
+        const fechaStr = new Date(e.fecha).toLocaleDateString('es-ES', {
+          weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric'
+        });
+        const nombreEvento = e.nombre || '(Sin título)';
+        return crearTexto(`• ${fechaStr} - ${nombreEvento}`);
+      });
+
+    const totalAsistencias = asistencias.length;
+    const porcentaje = total ? Math.round((totalAsistencias / total) * 100) : 0;
+
+    return [
+      new Paragraph({
+        children: [new TextRun({
+          text: nombreMostrar,
+          bold: true,
+          size: 32,
+          font: "Arial"
+        })],
+        heading: HeadingLevel.HEADING_1
+      }),
+      crearTexto(`Días asistidos / Total: ${totalAsistencias} / ${total}`),
+      crearTexto(`Porcentaje: ${porcentaje}%`),
+      crearTexto("Asistencias:"),
+      ...asistencias,
+      crearTexto("")
+    ];
   };
 
-  const [diegoResumen, sandraResumen] = [getStats('diego'), getStats('sandra')];
+  const doc = new Document({
+    sections: [{
+      properties: {},
+      children: [
+        crearTexto(`Resumen generado el ${fechaGeneracion}`, { italic: true, size: 24 }),
+        crearTexto(""),
+        ...getPersonaDoc('diego', 'Diego'),
+        ...getPersonaDoc('sandra', 'Sandra')
+      ]
+    }]
+  });
 
-  const csvRows = [
-    ['Nombre', 'Días asistidos / Total', 'Porcentaje'],
-    ['Diego', ...diegoResumen],
-    ['Sandra', ...sandraResumen]
-  ];
-
-  const csvContent = '\uFEFF' + csvRows.map(row => row.join(',')).join('\n');
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'resumen-asistencia.csv';
-  a.click();
-  URL.revokeObjectURL(url);
+  try {
+    const blob = await Packer.toBlob(doc);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'resumen-asistencia.docx';
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error("Error generando el DOCX:", error);
+    alert("Hubo un problema generando el archivo.");
+  }
 });
+
+renderEvents();
