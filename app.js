@@ -3,6 +3,7 @@ let events = JSON.parse(localStorage.getItem('abonoEventos')) || [];
 function saveEvents() {
   localStorage.setItem('abonoEventos', JSON.stringify(events));
   updateStats();
+  sendToGoogleSheets(); // Guarda en Google Sheets
 }
 
 function updateStats() {
@@ -12,7 +13,6 @@ function updateStats() {
 
   document.getElementById('diegoCount').textContent = `${diego} / ${total}`;
   document.getElementById('sandraCount').textContent = `${sandra} / ${total}`;
-
   document.getElementById('diegoPercentage').textContent = total ? `${Math.round((diego / total) * 100)}%` : '0%';
   document.getElementById('sandraPercentage').textContent = total ? `${Math.round((sandra / total) * 100)}%` : '0%';
 }
@@ -29,18 +29,22 @@ function renderEvents() {
     title.className = 'eventTitle';
     title.value = event.nombre;
     title.placeholder = 'Nombre del evento...';
-    title.addEventListener('input', e => {
-      events[index].nombre = e.target.value;
-      saveEvents();
+    title.addEventListener('blur', e => {
+      if (events[index].nombre !== e.target.value) {
+        events[index].nombre = e.target.value;
+        saveEvents();
+      }
     });
 
     const date = document.createElement('input');
     date.type = 'date';
     date.value = event.fecha;
     date.min = '2025-01-01';
-    date.addEventListener('input', e => {
-      events[index].fecha = e.target.value;
-      saveEvents();
+    date.addEventListener('blur', e => {
+      if (events[index].fecha !== e.target.value) {
+        events[index].fecha = e.target.value;
+        saveEvents();
+      }
     });
 
     const dateWrapper = document.createElement('div');
@@ -62,11 +66,17 @@ function renderEvents() {
       b.textContent = btn.label;
       b.className = `optionBtn ${btn.class}`;
       if (event.asistencia === btn.value) b.classList.add('selected');
+
       b.addEventListener('click', () => {
-        events[index].asistencia = btn.value;
-        saveEvents();
-        renderEvents();
+        if (events[index].asistencia !== btn.value) {
+          events[index].asistencia = btn.value;
+          saveEvents();
+          updateStats();
+          options.querySelectorAll('button').forEach(btn => btn.classList.remove('selected'));
+          b.classList.add('selected');
+        }
       });
+
       options.appendChild(b);
     });
 
@@ -97,59 +107,37 @@ document.getElementById('addEventBtn').addEventListener('click', () => {
   renderEvents();
 });
 
-document.getElementById('exportBtn').addEventListener('click', () => {
-  if (events.length === 0) return;
-
-  // Ordenar eventos por fecha
-  const sortedEvents = [...events].sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-  const total = sortedEvents.length;
-
-  // 1. Fila 1: Cabecera con fechas
-  const headerRow = ['Nombre', 'Días asistidos / Total', 'Porcentaje'];
-  sortedEvents.forEach(event => {
-    const date = new Date(event.fecha);
-    const formattedDate = date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    headerRow.push(formattedDate);
-  });
-
-  // 2. Fila 2: Nombres de eventos debajo de las fechas
-  const eventNameRow = ['', '', ''];
-  sortedEvents.forEach(event => {
-    eventNameRow.push(event.nombre || '(Sin nombre)');
-  });
-
-  // 3. Fila 3 y 4: Diego y Sandra
-  const getRow = (persona) => {
-    const asistenciaCount = sortedEvents.filter(e =>
-      e.asistencia === persona || e.asistencia === 'ambos'
-    ).length;
-    const porcentaje = total ? Math.round((asistenciaCount / total) * 100) : 0;
-    const row = [persona.charAt(0).toUpperCase() + persona.slice(1), `${asistenciaCount} / ${total}`, `${porcentaje}%`];
-
-    sortedEvents.forEach(event => {
-      if (event.asistencia === 'ambos' || event.asistencia === persona) {
-        row.push('✔️');
-      } else {
-        row.push('❌');
-      }
-    });
-
-    return row;
-  };
-
-  const diegoRow = getRow('diego');
-  const sandraRow = getRow('sandra');
-
-  // Generar CSV
-  const csvRows = [headerRow, eventNameRow, diegoRow, sandraRow];
-  const csvContent = csvRows.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
-
-  // Descargar archivo
-  const blob = new Blob([csvContent], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'abono-las-ventas.csv';
-  a.click();
-  URL.revokeObjectURL(url);
+document.getElementById('saveBtn').addEventListener('click', () => {
+  saveEvents(); // Guarda en local y en Google Sheets
 });
+
+function sendToGoogleSheets() {
+  const btn = document.getElementById("saveBtn");
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "⏳ Guardando...";
+
+  fetch("https://script.google.com/macros/s/AKfycbxxbjl0P6RWNIBVRMffHS_mg23PcTBTIcevNc8JOtvqlda_nD_SZuO33EmNuM05WE8O/exec", {
+    method: "POST",
+    body: JSON.stringify(events),
+    headers: {
+      "Content-Type": "application/json"
+    }
+  })
+  .then(res => {
+    if (res.ok) {
+      btn.textContent = "✅ Guardado";
+    } else {
+      btn.textContent = "❌ Error al guardar";
+    }
+  })
+  .catch(() => {
+    btn.textContent = "❌ Error de conexión";
+  })
+  .finally(() => {
+    setTimeout(() => {
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }, 2000);
+  });
+}
