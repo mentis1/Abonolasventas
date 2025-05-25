@@ -3,7 +3,6 @@ let events = JSON.parse(localStorage.getItem('abonoEventos')) || [];
 function saveEvents() {
   localStorage.setItem('abonoEventos', JSON.stringify(events));
   updateStats();
-  sendToGoogleSheets(); // Guarda en Google Sheets
 }
 
 function updateStats() {
@@ -68,13 +67,11 @@ function renderEvents() {
       if (event.asistencia === btn.value) b.classList.add('selected');
 
       b.addEventListener('click', () => {
-        if (events[index].asistencia !== btn.value) {
-          events[index].asistencia = btn.value;
-          saveEvents();
-          updateStats();
-          options.querySelectorAll('button').forEach(btn => btn.classList.remove('selected'));
-          b.classList.add('selected');
-        }
+        events[index].asistencia = btn.value;
+        saveEvents();
+        updateStats();
+        options.querySelectorAll('button').forEach(btn => btn.classList.remove('selected'));
+        b.classList.add('selected');
       });
 
       options.appendChild(b);
@@ -107,37 +104,31 @@ document.getElementById('addEventBtn').addEventListener('click', () => {
   renderEvents();
 });
 
-document.getElementById('saveBtn').addEventListener('click', () => {
-  saveEvents(); // Guarda en local y en Google Sheets
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const total = events.length;
+  if (total === 0) return;
+
+  const getStats = (persona) => {
+    const count = events.filter(e => e.asistencia === persona || e.asistencia === 'ambos').length;
+    const porcentaje = total ? Math.round((count / total) * 100) : 0;
+    return [`${count} / ${total}`, `${porcentaje}%`];
+  };
+
+  const [diegoResumen, sandraResumen] = [getStats('diego'), getStats('sandra')];
+
+  const csvRows = [
+    ['Nombre', 'Días asistidos / Total', 'Porcentaje'],
+    ['Diego', ...diegoResumen],
+    ['Sandra', ...sandraResumen]
+  ];
+
+  const csvContent = '\uFEFF' + csvRows.map(row => row.join(',')).join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'resumen-asistencia.csv';
+  a.click();
+  URL.revokeObjectURL(url);
 });
-
-function sendToGoogleSheets() {
-  const btn = document.getElementById("saveBtn");
-  const originalText = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = "⏳ Guardando...";
-
-  fetch("https://script.google.com/macros/s/AKfycbxxbjl0P6RWNIBVRMffHS_mg23PcTBTIcevNc8JOtvqlda_nD_SZuO33EmNuM05WE8O/exec", {
-    method: "POST",
-    body: JSON.stringify(events),
-    headers: {
-      "Content-Type": "application/json"
-    }
-  })
-  .then(res => {
-    if (res.ok) {
-      btn.textContent = "✅ Guardado";
-    } else {
-      btn.textContent = "❌ Error al guardar";
-    }
-  })
-  .catch(() => {
-    btn.textContent = "❌ Error de conexión";
-  })
-  .finally(() => {
-    setTimeout(() => {
-      btn.textContent = originalText;
-      btn.disabled = false;
-    }, 2000);
-  });
-}
