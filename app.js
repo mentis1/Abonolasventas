@@ -20,7 +20,14 @@ function renderEvents() {
   const container = document.getElementById('eventsList');
   container.innerHTML = '';
 
-  events.forEach((event, index) => {
+  // Ordenar los eventos por fecha de más nuevo a más antiguo
+  // Almacenar en una variable separada para no modificar el array original si no es necesario en otros puntos
+  const sortedEvents = [...events].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+  sortedEvents.forEach((event, index) => {
+    // Necesitamos encontrar el índice original del evento en el array 'events' para las actualizaciones
+    const originalIndex = events.findIndex(e => e === event);
+
     const card = document.createElement('div');
     card.className = 'eventCard';
 
@@ -29,8 +36,8 @@ function renderEvents() {
     title.value = event.nombre;
     title.placeholder = 'Nombre del evento...';
     title.addEventListener('blur', e => {
-      if (events[index].nombre !== e.target.value) {
-        events[index].nombre = e.target.value;
+      if (events[originalIndex].nombre !== e.target.value) {
+        events[originalIndex].nombre = e.target.value;
         saveEvents();
       }
     });
@@ -40,9 +47,10 @@ function renderEvents() {
     date.value = event.fecha;
     date.min = '2025-01-01';
     date.addEventListener('blur', e => {
-      if (events[index].fecha !== e.target.value) {
-        events[index].fecha = e.target.value;
+      if (events[originalIndex].fecha !== e.target.value) {
+        events[originalIndex].fecha = e.target.value;
         saveEvents();
+        renderEvents(); // Re-render para mantener el orden si la fecha cambia
       }
     });
 
@@ -67,7 +75,7 @@ function renderEvents() {
       if (event.asistencia === btn.value) b.classList.add('selected');
 
       b.addEventListener('click', () => {
-        events[index].asistencia = btn.value;
+        events[originalIndex].asistencia = btn.value;
         saveEvents();
         updateStats();
         options.querySelectorAll('button').forEach(btn => btn.classList.remove('selected'));
@@ -81,7 +89,7 @@ function renderEvents() {
     del.className = 'deleteBtn';
     del.textContent = 'Eliminar';
     del.addEventListener('click', () => {
-      events.splice(index, 1);
+      events.splice(originalIndex, 1);
       saveEvents();
       renderEvents();
     });
